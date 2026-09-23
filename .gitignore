@@ -1,18 +1,62 @@
-# Python cache
-__pycache__/
-*.pyc
+# ==========================================
+# Opti-Light: Root .gitignore Configuration
+# ==========================================
 
-# Jupyter Notebook checkpoints
+# 1. Environment & Secrets
+.env
+.env.*
+*.env
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# 2. Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+backend/venv/
+
+# 3. Python Cache & Compilation
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+
+# 4. Jupyter Notebooks Checkpoints
 .ipynb_checkpoints/
 
-# Dataset folders
-dataset/
-data/
+# 5. Node.js & Frontend Build Outputs
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build/
+.vite/
 
-# Virtual environment folders
-venv/
-.env/
+# 6. Local Databases & Logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
 
-# System files
+# 7. Local Uploads & Temporary Media
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# 8. Large Machine Learning Models (>100MB GitHub limit)
+# backend/model/best_model.h5 is 114.65 MB.
+# Track via Git LFS (.gitattributes) or host on GitHub Releases.
+backend/model/*.h5
+backend/model/*.keras
+
+# 9. Operating System & IDE Files
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace

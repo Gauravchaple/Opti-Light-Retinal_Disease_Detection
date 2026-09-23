@@ -1,0 +1,21 @@
+# Virtual environment
+env/
+venv/
+.venv/
+ENV/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local environment variables
+.env
+
+# Image uploads directory
+uploads/*
+!uploads/.gitkeep
+
+# IDE files
+.vscode/
+.idea/

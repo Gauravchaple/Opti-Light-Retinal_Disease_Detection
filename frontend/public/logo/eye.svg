@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Sclera / Eye contour -->
+  <path d="M4 24C9 14 16.5 8 24 8C31.5 8 39 14 44 24C39 34 31.5 40 24 40C16.5 40 9 34 4 24Z" fill="#FFFFFF" stroke="#7c3aed" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Iris -->
+  <circle cx="24" cy="24" r="9" fill="#7c3aed"/>
+  <!-- Pupil -->
+  <circle cx="24" cy="24" r="4.5" fill="#0a192f"/>
+  <!-- Light Reflection -->
+  <circle cx="21.5" cy="21.5" r="2" fill="#FFFFFF"/>
+</svg>
