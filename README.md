@@ -1,8 +1,8 @@
-# optilight — Retinal Disease Detection using OCT Images
+# 👁️ Optilight — Retinal Disease Detection using OCT Images
 
-## 1. Project Overview
+## 📋 Project Overview
 
-optilight is an AI-assisted web application designed for retinal disease classification using Optical Coherence Tomography (OCT) images. The system evaluates B-scan OCT cross-sections and categorizes them into one of four diagnostic classes:
+Optilight is an AI-assisted web application designed for retinal disease classification using Optical Coherence Tomography (OCT) images. The system evaluates B-scan OCT cross-sections and categorizes them into one of four diagnostic classes:
 
 - **CNV** — Choroidal Neovascularization
 - **DME** — Diabetic Macular Edema
@@ -16,11 +16,11 @@ The platform is structured as a decoupled web application comprising:
 - A relational database layer managed via SQLAlchemy with SQLite (default) and MySQL compatibility.
 - User authentication and access control implemented using JSON Web Tokens (JWT) with HTTP Bearer authorization.
 
-optilight is developed as an assistive clinical decision support tool to aid ophthalmologists and clinicians in analyzing OCT scans. It is not intended to provide autonomous medical diagnoses.
+Optilight is developed as an assistive clinical decision support tool to aid ophthalmologists and clinicians in analyzing OCT scans. It is not intended to provide autonomous medical diagnoses.
 
 ---
 
-## 2. System Architecture
+## 🏗️ System Architecture
 
 The following diagram illustrates the high-level architecture and data flow across the application:
 
@@ -61,7 +61,7 @@ Database                ML Inference Pipeline
 
 ---
 
-## 3. Repository Structure
+## 📁 Repository Structure
 
 ```
 Opti-Light-Retinal_Disease_Detection/
@@ -121,7 +121,7 @@ Opti-Light-Retinal_Disease_Detection/
 └── README.md                    # Main project documentation
 ```
 
-### Module Overview
+### 🧩 Module Overview
 
 - **backend/**: Contains the FastAPI application, database schemas, authentication workflows, GLCM texture extraction logic, and the trained model pipeline.
 - **frontend/**: Contains the React application, client-side routing, responsive UI views, state management, and API connection logic.
@@ -131,9 +131,9 @@ Opti-Light-Retinal_Disease_Detection/
 
 ---
 
-## 4. How It Works
+## ⚙️ How It Works
 
-### 4.1 OCT Image Upload
+### 📤 OCT Image Upload
 
 1. The user logs in and navigates to the **New Analysis** view.
 2. The user selects a retinal OCT scan image (`.jpg`, `.jpeg`, or `.png`).
@@ -141,7 +141,7 @@ Opti-Light-Retinal_Disease_Detection/
 4. The user clicks **Analyze Scan**.
 5. The frontend transmits the file via a `multipart/form-data` request to the backend prediction endpoint (`POST /api/predictions`) alongside the user's Bearer authentication token.
 
-### 4.2 Prediction Results
+### 🔬 Prediction Results
 
 The backend processes the uploaded OCT image through the following inference workflow:
 
@@ -174,7 +174,7 @@ Deep Features           Texture Features
    - Individual probability progress bars for all four conditions.
    - An interactive view of the uploaded OCT scan with clinical summary notes.
 
-### 4.3 Prediction History
+### 📜 Prediction History
 
 - Authenticated users can access the **History** page to review all previously submitted analyses.
 - Prediction records are fetched chronologically from `GET /api/predictions/history`.
@@ -182,7 +182,7 @@ Deep Features           Texture Features
 - Users can view detailed breakdowns for any past record (`GET /api/predictions/{id}`).
 - Users can delete individual records (`DELETE /api/predictions/{id}`), which removes both the database entry and the corresponding image file from server storage.
 
-### 4.4 User Profile
+### 👤 User Profile
 
 - The **Profile** page retrieves the authenticated user's information via `GET /api/auth/me`.
 - Displays the user's registered name, email address, and account creation date.
@@ -190,7 +190,7 @@ Deep Features           Texture Features
 
 ---
 
-## 5. Machine Learning Approach
+## 🧠 Machine Learning Approach
 
 The classification architecture uses a dual-branch feature extraction pipeline designed to capture both macro-structural retinal morphology and fine micro-textural patterns.
 
@@ -230,13 +230,13 @@ The classification architecture uses a dual-branch feature extraction pipeline d
                     +-----------------------+
 ```
 
-### ResNet50
+### 🖼️ ResNet50
 
 - A pre-trained ResNet50 convolutional neural network is employed as a spatial feature extractor.
 - Input scans are formatted to $224 \times 224 \times 3$ RGB representations and normalized.
 - The network extracts deep representations that capture layer curvatures, foveal depressions, structural elevations, and fluid accumulations.
 
-### GLCM
+### 🔲 GLCM
 
 - Gray-Level Co-occurrence Matrix (GLCM) extraction evaluates second-order statistical texture distributions within the OCT cross-sections.
 - Scans are converted to grayscale and resized to $224 \times 224$.
@@ -252,7 +252,7 @@ The classification architecture uses a dual-branch feature extraction pipeline d
 
 ---
 
-## 6. Feature Fusion
+## 🔗 Feature Fusion
 
 The deep convolutional features extracted by ResNet50 and the statistical texture features generated by GLCM are concatenated into a unified representation vector before classification:
 
@@ -281,7 +281,7 @@ Deep Features      Texture Features
 
 ---
 
-## 7. Supported Classes
+## 🎯 Supported Classes
 
 | Class | Full Name | Description |
 |---|---|---|
@@ -292,16 +292,16 @@ Deep Features      Texture Features
 
 ---
 
-## 8. Getting Started
+## 🚀 Getting Started
 
-### Prerequisites
+### 📌 Prerequisites
 
 - **Python**: Version 3.10 or newer
 - **Node.js**: Version 18 or newer
 - **npm**: Package manager (included with Node.js)
 - **Git**: Version control system
 
-### Repository Setup
+### 💻 Repository Setup
 
 Clone the repository to your local machine:
 
@@ -314,7 +314,7 @@ The backend and frontend services must be configured and executed in separate te
 
 ---
 
-## 9. Backend Setup
+## 🛠️ Backend Setup
 
 1. Open a terminal and navigate to the `backend/` directory:
 
@@ -356,7 +356,7 @@ python -m uvicorn app.main:app --reload
 - **Backend Base URL**: `http://127.0.0.1:8000`
 - **Interactive Swagger Documentation**: `http://127.0.0.1:8000/docs`
 
-#### Standalone CLI Inference (Optional)
+#### 🧪 Standalone CLI Inference (Optional)
 
 You can run predictions directly from the command line without starting the web server:
 
@@ -366,7 +366,7 @@ python predict.py test_sample.jpeg
 
 ---
 
-## 10. Frontend Setup
+## 🌐 Frontend Setup
 
 1. Open a new terminal and navigate to the `frontend/` directory:
 
@@ -401,7 +401,7 @@ npm run dev
 
 ---
 
-## 11. API Overview
+## 📡 API Overview
 
 The FastAPI backend exposes the following RESTful API endpoints:
 
@@ -419,7 +419,7 @@ The FastAPI backend exposes the following RESTful API endpoints:
 
 ---
 
-## 12. Model Performance
+## 📊 Model Performance
 
 The model evaluation results documented on the dataset test partition are summarized below:
 
@@ -428,7 +428,7 @@ The model evaluation results documented on the dataset test partition are summar
 | **Overall Accuracy** | **97.1%** |
 | **Macro F1-Score** | **0.96** |
 
-### Class-Wise Evaluation Metrics
+### 📈 Class-Wise Evaluation Metrics
 
 | Class | Precision | Recall | F1-Score |
 |---|:---:|:---:|:---:|
@@ -441,45 +441,43 @@ The model evaluation results documented on the dataset test partition are summar
 
 ---
 
-## 13. All Screenshots
+## 🖼️ All Screenshots
 
-### Application Screenshots
+### 💻 Application Screenshots
 
-#### New Analysis
+#### 📤 New Analysis
 ![New Analysis](docs/screenshots/HomePage.png)
 
-#### Prediction History
+#### 📜 Prediction History
 ![Prediction History](docs/screenshots/History.png)
 
-#### About Optilight — Part 1
+#### ℹ️ About Optilight — Part 1
 ![About Optilight](docs/screenshots/About-1.png)
 
-#### About Optilight — Part 2
+#### ℹ️ About Optilight — Part 2
 ![About Optilight](docs/screenshots/About-2.png)
 
-### Model Evaluation Screenshots
+### 📊 Model Evaluation Screenshots
 
-#### Training Accuracy
+#### 📈 Training Accuracy
 ![Training Accuracy](docs/screenshots/accuracy_graph.png)
 
-#### Training vs Validation Accuracy
+#### 📉 Training vs Validation Accuracy
 ![Training vs Validation Accuracy](docs/screenshots/TrainvsVal_acc_graph.png)
 
-#### Confusion Matrix
+#### 🔲 Confusion Matrix
 ![Confusion Matrix](docs/screenshots/confusion_matrix.png)
 
-#### F1-Score Per Class
+#### 🎯 F1-Score Per Class
 ![F1 Score](docs/screenshots/f1-score_per_class.png)
 
-#### Precision Per Class
+#### 🎯 Precision Per Class
 ![Precision](docs/screenshots/precision_per_class.png)
 
-#### Recall Per Class
+#### 🎯 Recall Per Class
 ![Recall](docs/screenshots/recall_per_class.png)
 
-#### Overall Metrics
+#### 📊 Overall Metrics
 ![Overall Metrics](docs/screenshots/overall_metrics_summary.png)
 
 ---
-
-> **Disclaimer:** optilight is an academic AI-assisted project. Its predictions are intended to support image analysis and should not be considered a standalone medical diagnosis. Clinical decisions should be made by qualified healthcare professionals using appropriate clinical information and medical judgment.
