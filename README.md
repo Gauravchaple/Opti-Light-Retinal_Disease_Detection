@@ -1,300 +1,485 @@
-# Optilight — Retinal Disease Detection using OCT Images
+# optilight — Retinal Disease Detection using OCT Images
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://react.dev/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.16%2B-FF6F00.svg)](https://www.tensorflow.org/)
-[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3.svg)](https://getbootstrap.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+## 1. Project Overview
 
-An end-to-end, AI-assisted clinical decision support system designed to classify Optical Coherence Tomography (OCT) retinal images into four diagnostic categories: **CNV**, **DME**, **DRUSEN**, and **NORMAL**. The system pairs a dual-stream deep learning and texture feature extraction pipeline with a high-performance FastAPI backend and a responsive clinical React dashboard.
+optilight is an AI-assisted web application designed for retinal disease classification using Optical Coherence Tomography (OCT) images. The system evaluates B-scan OCT cross-sections and categorizes them into one of four diagnostic classes:
 
----
+- **CNV** — Choroidal Neovascularization
+- **DME** — Diabetic Macular Edema
+- **DRUSEN** — Drusen
+- **NORMAL** — Normal Retina
 
-## 📑 Table of Contents
-1. [Project Overview](#-project-overview)
-2. [Key Features](#-key-features)
-3. [System Architecture](#-system-architecture)
-4. [Machine Learning Approach: ResNet50 + GLCM](#-machine-learning-approach)
-5. [Supported Diagnostic Classes](#-supported-diagnostic-classes)
-6. [Repository Structure](#-repository-structure)
-7. [Getting Started & Installation](#-getting-started--installation)
-   - [Prerequisites](#prerequisites)
-   - [Backend Setup](#1-backend-setup)
-   - [Frontend Setup](#2-frontend-setup)
-8. [API Overview](#-api-overview)
-9. [Model Performance & Evaluation](#-model-performance--evaluation)
-10. [Application Preview](#-application-preview)
-11. [Clinical Decision Support Disclaimer](#-clinical-decision-support-disclaimer)
-12. [Future Enhancements](#-future-enhancements)
+The platform is structured as a decoupled web application comprising:
+- A modern single-page frontend built with React 18, Vite, React Router, and Bootstrap 5.
+- A RESTful backend powered by FastAPI and Uvicorn.
+- A dual-branch machine learning pipeline combining deep convolutional features from ResNet50 with texture descriptors from Gray-Level Co-occurrence Matrix (GLCM) analysis.
+- A relational database layer managed via SQLAlchemy with SQLite (default) and MySQL compatibility.
+- User authentication and access control implemented using JSON Web Tokens (JWT) with HTTP Bearer authorization.
+
+optilight is developed as an assistive clinical decision support tool to aid ophthalmologists and clinicians in analyzing OCT scans. It is not intended to provide autonomous medical diagnoses.
 
 ---
 
-## 🔍 Project Overview
+## 2. System Architecture
 
-Retinal conditions such as Choroidal Neovascularization (CNV), Diabetic Macular Edema (DME), and Drusen are leading causes of irreversible vision loss worldwide. Early and accurate cross-sectional evaluation of the retina via Optical Coherence Tomography (OCT) is critical for timely intervention.
-
-**Optilight** provides an intelligent, accessible diagnostic support platform that bridges raw imaging and clinical practitioners. By combining spatial deep features from convolutional networks with statistical texture descriptors, Optilight delivers reliable, probability-calibrated classification in under a second.
-
----
-
-## ✨ Key Features
-
-- **Dual-Stream Feature Fusion**: Fuses deep visual representations (ResNet50) with multi-directional Gray-Level Co-occurrence Matrix (GLCM) texture descriptors.
-- **Calibrated Multi-Class Probability**: Provides confidence percentages across all four classes rather than opaque binary decisions.
-- **Secure Practitioner Authentication**: Standard OAuth2 Password Bearer flow with JSON Web Tokens (JWT) and Bcrypt password hashing.
-- **Audit & Evaluation History**: Complete tracking of evaluated OCT scans, timestamped logs, and inspection details per practitioner.
-- **Clean Clinical UI/UX**: Professional Bootstrap 5 dashboard with responsive navigation, image upload previews, and interactive diagnostics.
-- **Robust Error Handling**: Real-time validation for image formats, dimensions, file size constraints, and database fallback.
-
----
-
-## 🏗 System Architecture
+The following diagram illustrates the high-level architecture and data flow across the application:
 
 ```
-                  ┌──────────────────────────────────────────────┐
-                  │          Practitioner Web Client             │
-                  │    React 18 • Vite • Bootstrap 5 • Axios     │
-                  └──────────────────────┬───────────────────────┘
-                                         │ HTTP / REST / Multipart
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │             FastAPI Backend Server           │
-                  │   OAuth2 JWT Auth • CORS • Static Uploads    │
-                  └──────────────┬───────────────────────────────┘
-                                 │
-         ┌───────────────────────┴───────────────────────┐
-         ▼                                               ▼
-┌──────────────────────────────┐       ┌─────────────────────────────────┐
-│     Relational Database      │       │     ML Inference Pipeline       │
-│ SQLAlchemy (SQLite / MySQL)  │       │                                 │
-│ Users & Prediction History   │       │  OCT Image (224x224x3 B-scan)   │
-└──────────────────────────────┘       │          │           │          │
-                                       │   ResNet50 CNN     GLCM Matrix  │
-                                       │   Deep Features   Texture (6D)  │
-                                       │          └─────┬─────┘          │
-                                       │           Dense Fusion          │
-                                       │                ▼                │
-                                       │      Softmax (4 Classes)        │
-                                       └─────────────────────────────────┘
+React Frontend
+       |
+       | REST API / HTTP
+       v
+FastAPI Backend
+       |
+       +----------------------+
+       |                      |
+       v                      v
+Database                ML Inference Pipeline
+(SQLite / MySQL)              |
+                       +------+------+
+                       |             |
+                       v             v
+                    ResNet50       GLCM
+                       |             |
+                       +------+------+
+                              |
+                              v
+                       Feature Fusion
+                              |
+                              v
+                        Classification
+                              |
+                              v
+                    CNV / DME / DRUSEN
+                           / NORMAL
 ```
 
----
-
-## 🧠 Machine Learning Approach
-
-### Dual-Stream Feature Fusion: ResNet50 + GLCM
-
-Medical OCT scans contain both macro-structural layer geometries (macular thickness, fluid cysts) and fine micro-textural properties (speckle patterns, layer reflectivity). Standard CNNs often overlook subtle statistical texture differences, while traditional feature extractors lack spatial hierarchies. Optilight solves this by combining both:
-
-1. **Deep Spatial Features (ResNet50)**:
-   - Input: $224 \times 224 \times 3$ normalized RGB image.
-   - Pre-trained on ImageNet with top classification layers removed.
-   - Extracts high-level convolutional feature maps via average pooling.
-2. **Statistical Texture Descriptors (GLCM)**:
-   - Input: $224 \times 224$ grayscale representation.
-   - Computes Gray-Level Co-occurrence Matrices across distances $[1, 2, 3]$ and angles $[0, \frac{\pi}{4}, \frac{\pi}{2}, \frac{3\pi}{4}]$.
-   - Extracts rotational-invariant properties: **Contrast**, **Dissimilarity**, **Homogeneity**, **Energy**, **Correlation**, and **Angular Second Moment (ASM)**.
-   - Normalized using pre-fitted dataset `StandardScaler` parameters.
-3. **Fusion & Classification**:
-   - The deep convolutional vector and the dense texture representation are concatenated into a unified embedding vector before passing through dense dropout layers to a 4-unit softmax classifier.
+1. **Client Layer:** The user interacts with the React single-page application to upload OCT images, review classification probabilities, examine prediction history, and manage account details.
+2. **API & Service Layer:** FastAPI handles HTTP requests, validates JWT authorization tokens, processes file uploads, and coordinates database operations.
+3. **Machine Learning Pipeline:** Received images undergo preprocessing, feature extraction through ResNet50 and GLCM branches, vector fusion, and final Softmax classification.
+4. **Persistence Layer:** SQLAlchemy manages user profiles and stores chronological prediction logs, probability distributions, and scan metadata.
 
 ---
 
-## 🎯 Supported Diagnostic Classes
-
-| Class | Condition Name | Key Pathological Features on OCT |
-| :--- | :--- | :--- |
-| **CNV** | Choroidal Neovascularization | Neovascular complex breaking through Bruch's membrane, subretinal/intraretinal fluid, RPE elevation. |
-| **DME** | Diabetic Macular Edema | Cystoid intraretinal fluid spaces, retinal thickening, disrupted retinal architecture. |
-| **DRUSEN** | Drusen Deposits | Convex extracellular lipid deposits between RPE and Bruch's membrane, undulating RPE contour. |
-| **NORMAL** | Healthy OCT | Preserved foveal depression, continuous intact retinal layers, absence of fluid or deposits. |
-
----
-
-## 📁 Repository Structure
-
-The repository is organized into three clean primary modules:
+## 3. Repository Structure
 
 ```
 Opti-Light-Retinal_Disease_Detection/
-├── backend/                       # FastAPI Server & ML Prediction Engine
+│
+├── backend/
 │   ├── app/
-│   │   ├── api/routes/            # Authentication, prediction, and health endpoints
-│   │   ├── core/                  # Security utilities, JWT creation/verification
-│   │   ├── db/                    # SQLAlchemy models and database sessions
-│   │   ├── ml/                    # ResNet50 preprocessing, GLCM extractor, model loader
-│   │   ├── services/              # Prediction orchestration pipeline
-│   │   └── main.py                # FastAPI entry point & CORS configuration
-│   ├── model/                     # Trained weights & feature scaler
-│   │   └── saved_scaler.pkl       # 6/8-feature StandardScaler parameters
-│   ├── uploads/                   # Runtime image storage (.gitkeep preserved)
-│   ├── predict.py                 # Standalone command-line inference script
-│   ├── requirements.txt           # Python dependency specifications
-│   └── .env.example               # Backend environment variable template
+│   │   ├── api/routes/          # API route handlers (auth, prediction, health)
+│   │   ├── core/                # JWT utilities and password hashing
+│   │   ├── db/                  # Database models and session engine
+│   │   ├── ml/                  # Preprocessing, GLCM extraction, and model loading
+│   │   ├── services/            # Prediction orchestration service
+│   │   └── main.py              # FastAPI application entry point
+│   ├── model/                   # Model weights (best_model.h5) and saved_scaler.pkl
+│   ├── uploads/                 # Storage directory for uploaded OCT scan files
+│   ├── predict.py               # Standalone command-line inference script
+│   ├── requirements.txt         # Backend Python dependencies
+│   └── .env.example             # Backend environment variable template
 │
-├── frontend/                      # React 18 Single Page Application
-│   ├── public/logo/               # Brand assets & emblems
+├── docs/
+│   └── screenshots/             # Application interface and evaluation figures
+│       ├── About-1.png
+│       ├── About-2.png
+│       ├── HomePage.png
+│       ├── History.png
+│       ├── accuracy_graph.png
+│       ├── TrainvsVal_acc_graph.png
+│       ├── confusion_matrix.png
+│       ├── f1-score_per_class.png
+│       ├── precision_per_class.png
+│       ├── recall_per_class.png
+│       └── overall_metrics_summary.png
+│
+├── frontend/
+│   ├── public/                  # Static assets and brand logos
 │   ├── src/
-│   │   ├── api/                   # Axios API service integrations
-│   │   ├── components/            # Reusable UI widgets (Sidebar, Logo, Modals, Bars)
-│   │   ├── context/               # Authentication state provider
-│   │   ├── pages/                 # NewAnalysis, History, Details, Profile, About
-│   │   ├── App.jsx                # Router configuration & protected routes
-│   │   └── main.jsx               # React DOM entry point
-│   ├── package.json               # Frontend dependencies & scripts
-│   ├── package-lock.json          # Deterministic dependency lockfile
-│   ├── vite.config.js             # Vite bundler configuration
-│   └── .env.example               # Frontend environment variable template
+│   │   ├── api/                 # Axios API service integrations
+│   │   ├── components/          # Reusable UI components (Sidebar, Layout, Modals)
+│   │   ├── context/             # Authentication context and global session state
+│   │   ├── pages/               # Views (NewAnalysis, History, Profile, About, Auth)
+│   │   ├── services/            # API client configurations
+│   │   ├── App.jsx              # Client router and route protection
+│   │   ├── index.css            # Styling and visual theme rules
+│   │   └── main.jsx             # React application entry point
+│   ├── package.json             # Frontend package configurations and scripts
+│   ├── package-lock.json        # Deterministic dependency tree
+│   ├── vite.config.js           # Vite development and bundle configuration
+│   └── .env.example             # Frontend environment variable template
 │
-├── docs/                          # Project Documentation & Artifacts
-│   ├── logs/                      # Training logs and metrics
-│   │   └── training_log.csv       # Epoch-by-epoch loss & accuracy log
-│   ├── notebooks/                 # Jupyter research & reproduction notebooks
-│   │   ├── Training.ipynb         # Full model training notebook
-│   │   └── Testing.ipynb          # Model validation and confusion matrix notebook
-│   ├── results/                   # Confusion matrix, PR curves, accuracy charts
-│   └── screenshots/               # Application interface previews
+├── Logs/
+│   └── training_log.csv         # Epoch-wise training and validation logs
 │
-├── .gitignore                     # Repository git ignore rules
-└── README.md                      # Main project documentation
+├── Notebook/
+│   ├── Testing.ipynb            # Model evaluation and metric calculation notebook
+│   └── Training.ipynb           # Model training and feature extraction notebook
+│
+├── .gitignore                   # Git exclusion rules
+└── README.md                    # Main project documentation
 ```
+
+### Module Overview
+
+- **backend/**: Contains the FastAPI application, database schemas, authentication workflows, GLCM texture extraction logic, and the trained model pipeline.
+- **frontend/**: Contains the React application, client-side routing, responsive UI views, state management, and API connection logic.
+- **docs/screenshots/**: Houses application interface previews and model evaluation graphs.
+- **Logs/**: Contains training logs including epoch-by-epoch loss and accuracy metrics.
+- **Notebook/**: Contains Jupyter notebooks detailing the model training pipeline, feature fusion experimentation, and testing workflows.
 
 ---
 
-## 🚀 Getting Started & Installation
+## 4. How It Works
+
+### 4.1 OCT Image Upload
+
+1. The user logs in and navigates to the **New Analysis** view.
+2. The user selects a retinal OCT scan image (`.jpg`, `.jpeg`, or `.png`).
+3. An image preview is displayed immediately within the interface to confirm selection.
+4. The user clicks **Analyze Scan**.
+5. The frontend transmits the file via a `multipart/form-data` request to the backend prediction endpoint (`POST /api/predictions`) alongside the user's Bearer authentication token.
+
+### 4.2 Prediction Results
+
+The backend processes the uploaded OCT image through the following inference workflow:
+
+```
+OCT Image
+    |
+Image Preprocessing
+    |
++-----------+-----------+
+|                       |
+ResNet50                GLCM
+|                       |
+Deep Features           Texture Features
+|                       |
++-----------+-----------+
+            |
+      Feature Fusion
+            |
+      Classification
+            |
+      Prediction Result
+```
+
+1. **Validation & Storage:** The uploaded file extension is verified, assigned a unique identifier, and saved to the local `uploads/` directory.
+2. **Dual-Branch Extraction:** The image is preprocessed and concurrently analyzed by the deep ResNet50 network and the GLCM statistical texture extractor.
+3. **Inference & Logging:** Feature vectors are combined and evaluated by the classifier. The resulting prediction, confidence score, and per-class probability distribution are saved to the database.
+4. **Display:** The frontend **Analysis Result** page renders:
+   - The primary predicted condition badge (CNV, DME, DRUSEN, or NORMAL).
+   - An overall confidence percentage.
+   - Individual probability progress bars for all four conditions.
+   - An interactive view of the uploaded OCT scan with clinical summary notes.
+
+### 4.3 Prediction History
+
+- Authenticated users can access the **History** page to review all previously submitted analyses.
+- Prediction records are fetched chronologically from `GET /api/predictions/history`.
+- The interface displays the scan thumbnail, predicted disease label, confidence percentage, date, and timestamp.
+- Users can view detailed breakdowns for any past record (`GET /api/predictions/{id}`).
+- Users can delete individual records (`DELETE /api/predictions/{id}`), which removes both the database entry and the corresponding image file from server storage.
+
+### 4.4 User Profile
+
+- The **Profile** page retrieves the authenticated user's information via `GET /api/auth/me`.
+- Displays the user's registered name, email address, and account creation date.
+- Provides session controls including a secure logout action.
+
+---
+
+## 5. Machine Learning Approach
+
+The classification architecture uses a dual-branch feature extraction pipeline designed to capture both macro-structural retinal morphology and fine micro-textural patterns.
+
+```
+                    +-----------------------+
+                    |    Input OCT Scan     |
+                    +-----------+-----------+
+                                |
+                +---------------+---------------+
+                |                               |
+                v                               v
+    +-----------------------+       +-----------------------+
+    |       ResNet50        |       |         GLCM          |
+    |  Deep Feature Branch  |       | Texture Feature Branch|
+    +-----------+-----------+       +-----------+-----------+
+                |                               |
+                v                               v
+          Deep Features                  Texture Features
+        (Spatial Semantics)            (Statistical Texture)
+                |                               |
+                +---------------+---------------+
+                                |
+                                v
+                    +-----------------------+
+                    |    Feature Fusion     |
+                    +-----------+-----------+
+                                |
+                                v
+                    +-----------------------+
+                    |    Classification     |
+                    |    (Softmax Layer)    |
+                    +-----------+-----------+
+                                |
+                                v
+                    +-----------------------+
+                    |  4 Diagnostic Classes |
+                    +-----------------------+
+```
+
+### ResNet50
+
+- A pre-trained ResNet50 convolutional neural network is employed as a spatial feature extractor.
+- Input scans are formatted to $224 \times 224 \times 3$ RGB representations and normalized.
+- The network extracts deep representations that capture layer curvatures, foveal depressions, structural elevations, and fluid accumulations.
+
+### GLCM
+
+- Gray-Level Co-occurrence Matrix (GLCM) extraction evaluates second-order statistical texture distributions within the OCT cross-sections.
+- Scans are converted to grayscale and resized to $224 \times 224$.
+- Co-occurrence matrices are computed across pixel distances $[1, 2, 3]$ and angles $[0, \frac{\pi}{4}, \frac{\pi}{2}, \frac{3\pi}{4}]$.
+- Six statistical texture descriptors are extracted:
+  1. **Contrast** — Measures local intensity variations.
+  2. **Dissimilarity** — Measures the variation of gray-level pairs.
+  3. **Homogeneity** — Evaluates the closeness of element distribution to the GLCM diagonal.
+  4. **Energy** — Measures textural uniformity.
+  5. **Correlation** — Evaluates linear dependency of gray levels of neighboring pixels.
+  6. **Angular Second Moment (ASM)** — Measures orderly textural characteristics.
+- Extracted features are normalized using a pre-fitted `StandardScaler` (`saved_scaler.pkl`).
+
+---
+
+## 6. Feature Fusion
+
+The deep convolutional features extracted by ResNet50 and the statistical texture features generated by GLCM are concatenated into a unified representation vector before classification:
+
+```
+OCT Image
+   |
+   +------------------+
+   |                  |
+   v                  v
+ResNet50             GLCM
+   |                  |
+Deep Features      Texture Features
+   |                  |
+   +--------+---------+
+            |
+      Feature Fusion
+            |
+      Classification
+            |
+      4-Class Output
+```
+
+1. **Integration:** Spatial representations capturing anatomical layer geometry and statistical descriptors capturing local reflective variations are combined.
+2. **Dense Classification:** The fused vector is processed through dense neural network layers with dropout regularization.
+3. **Probability Output:** A final 4-unit Softmax activation layer produces a normalized probability distribution across the target retinal conditions.
+
+---
+
+## 7. Supported Classes
+
+| Class | Full Name | Description |
+|---|---|---|
+| **CNV** | Choroidal Neovascularization | Abnormal growth of new blood vessels originating from the choroid through Bruch's membrane into the sub-retinal space, often accompanied by subretinal fluid or exudation. |
+| **DME** | Diabetic Macular Edema | Retinal thickening and fluid accumulation within the macula resulting from damaged retinal microvasculature associated with diabetes mellitus. |
+| **DRUSEN** | Drusen | Extracellular lipid-rich deposits accumulating between the retinal pigment epithelium (RPE) and Bruch's membrane, representing a key hallmark of age-related macular degeneration. |
+| **NORMAL** | Normal Retina | Healthy retinal morphology characterized by preserved foveal architecture, intact and continuous anatomical layers, and absence of fluid or deposits. |
+
+---
+
+## 8. Getting Started
 
 ### Prerequisites
-- **Python**: 3.10, 3.11, or 3.12
-- **Node.js**: v18+ & **npm**
-- **Git** & (Optional) **Git LFS**
+
+- **Python**: Version 3.10 or newer
+- **Node.js**: Version 18 or newer
+- **npm**: Package manager (included with Node.js)
+- **Git**: Version control system
+
+### Repository Setup
+
+Clone the repository to your local machine:
+
+```bash
+git clone https://github.com/Gauravchaple/Opti-Light-Retinal_Disease_Detection.git
+cd Opti-Light-Retinal_Disease_Detection
+```
+
+The backend and frontend services must be configured and executed in separate terminal sessions.
 
 ---
 
-### 1. Backend Setup
+## 9. Backend Setup
+
+1. Open a terminal and navigate to the `backend/` directory:
 
 ```bash
-# Navigate to the backend directory
 cd backend
+```
 
-# Create a virtual environment
+2. Create and activate a Python virtual environment:
+
+```powershell
+# Create virtual environment
 python -m venv venv
 
-# Activate the virtual environment
-# Windows (PowerShell):
-.\venv\Scripts\Activate.ps1
-# Linux/macOS:
-source venv/bin/activate
+# Activate on Windows PowerShell:
+.\venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment variables
-cp .env.example .env
-
-# Run database migrations and start server
-python app/main.py
+# Activate on Linux / macOS:
+# source venv/bin/activate
 ```
-*The FastAPI server will be accessible at `http://127.0.0.1:8000` (API Docs at `http://127.0.0.1:8000/docs`).*
 
-#### Optional: Standalone CLI Inference
-You can test any OCT image directly without starting the server:
+3. Install the required Python packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Configure the environment variables (optional, defaults provided):
+
+```bash
+cp .env.example .env
+```
+
+5. Start the FastAPI development server:
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+- **Backend Base URL**: `http://127.0.0.1:8000`
+- **Interactive Swagger Documentation**: `http://127.0.0.1:8000/docs`
+
+#### Standalone CLI Inference (Optional)
+
+You can run predictions directly from the command line without starting the web server:
+
 ```bash
 python predict.py test_sample.jpeg
 ```
 
 ---
 
-### 2. Frontend Setup
+## 10. Frontend Setup
+
+1. Open a new terminal and navigate to the `frontend/` directory:
 
 ```bash
-# In a new terminal, navigate to the frontend directory
 cd frontend
+```
 
-# Install npm dependencies
+2. Install the necessary Node.js dependencies:
+
+```bash
 npm install
+```
 
-# Configure environment variables
+3. Configure the environment variables (optional, defaults to backend port 8000):
+
+```bash
 cp .env.example .env
+```
 
-# Start the Vite development server
+The default `.env` configuration contains:
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+4. Start the Vite development server:
+
+```bash
 npm run dev
 ```
-*The frontend dashboard will be available at `http://localhost:5173`.*
+
+- **Web Application URL**: `http://localhost:5173`
 
 ---
 
-## 📡 API Overview
+## 11. API Overview
 
-| Method | Endpoint | Description | Auth Required |
-| :--- | :--- | :--- | :---: |
-| `POST` | `/api/auth/register` | Register a new practitioner account | No |
-| `POST` | `/api/auth/login` | Authenticate and obtain JWT access token | No |
-| `GET` | `/api/auth/me` | Fetch currently authenticated user profile | Yes |
-| `POST` | `/api/predictions` | Upload OCT B-scan (`.jpg`, `.png`) for AI inference | Yes |
-| `GET` | `/api/predictions/history` | Retrieve chronological analysis logs for user | Yes |
-| `GET` | `/api/predictions/{id}` | Fetch full diagnostic breakdown for a specific scan | Yes |
-| `DELETE` | `/api/predictions/{id}` | Remove prediction record and delete stored image | Yes |
-| `GET` | `/api/health` | System readiness & ML asset health check | No |
+The FastAPI backend exposes the following RESTful API endpoints:
 
----
-
-## 📊 Model Performance & Evaluation
-
-The model was trained on the benchmark **Kermany OCT2017 Dataset** (61,300 training images, 7,665 test images).
-
-- **Overall Accuracy**: **97.1%**
-- **Macro F1-Score**: **0.96**
-
-| Class | Precision | Recall | F1-Score | Test Samples |
-| :--- | :---: | :---: | :---: | :---: |
-| **CNV** | 0.99 | 0.98 | 0.98 | 3,145 |
-| **DME** | 0.95 | 0.97 | 0.96 | 1,102 |
-| **DRUSEN** | 0.89 | 0.95 | 0.92 | 802 |
-| **NORMAL** | 0.98 | 0.97 | 0.98 | 2,616 |
-
-### Evaluation Figures & Confusion Matrix
-
-| Confusion Matrix | Overall Metrics Summary |
-| :---: | :---: |
-| <img src="docs/results/confusion_matrix.png" alt="Confusion Matrix" width="450" /> | <img src="docs/results/overall_metrics_summary.png" alt="Overall Metrics Summary" width="450" /> |
-
-| Training vs Validation Accuracy | F1-Score per Class |
-| :---: | :---: |
-| <img src="docs/results/TrainvsVal_acc_graph.png" alt="Train vs Validation Accuracy" width="450" /> | <img src="docs/results/f1_score_per_class.png" alt="F1-Score per Class" width="450" /> |
-
-*All training curves and metric charts can be viewed in the [docs/results/](docs/results/) directory.*
+| Method | Endpoint | Description | Authentication |
+|---|---|---|:---:|
+| `POST` | `/api/auth/register` | Register a new practitioner account with name, email, and password | None |
+| `POST` | `/api/auth/login` | Authenticate user credentials and return a Bearer JWT access token | None |
+| `GET` | `/api/auth/me` | Retrieve the authenticated user's profile details | Bearer JWT |
+| `POST` | `/api/predictions` | Upload an OCT image file (`.jpg`, `.jpeg`, `.png`) for disease classification | Bearer JWT |
+| `GET` | `/api/predictions/history` | Retrieve chronological prediction history for the authenticated user | Bearer JWT |
+| `GET` | `/api/predictions/{id}` | Fetch full diagnostic breakdown and probabilities for a specific prediction | Bearer JWT |
+| `DELETE` | `/api/predictions/{id}` | Delete a prediction record and its associated image file from disk | Bearer JWT |
+| `GET` | `/api/health` | Check general backend system readiness | None |
+| `GET` | `/api/health/model` | Verify ML model availability and return input tensor shapes | None |
 
 ---
 
-## 🖥 Application Preview
+## 12. Model Performance
 
-| New Analysis & Prediction Dashboard | Prediction History Log |
-| :---: | :---: |
-| <img src="docs/screenshots/HomePage.png" alt="Optilight Home Page" width="450" /> | <img src="docs/screenshots/History.png" alt="Optilight History Page" width="450" /> |
+The model evaluation results documented on the dataset test partition are summarized below:
 
-| About Optilight & Disease Descriptions | How Optilight Works Pipeline |
-| :---: | :---: |
-| <img src="docs/screenshots/About-1.png" alt="About Optilight - Part 1" width="450" /> | <img src="docs/screenshots/About-2.png" alt="About Optilight - Part 2" width="450" /> |
+| Metric | Value |
+|---|:---:|
+| **Overall Accuracy** | **97.1%** |
+| **Macro F1-Score** | **0.96** |
 
----
+### Class-Wise Evaluation Metrics
 
-## ⚠️ Clinical Decision Support Disclaimer
+| Class | Precision | Recall | F1-Score |
+|---|:---:|:---:|:---:|
+| **CNV** | 0.99 | 0.98 | 0.98 |
+| **DME** | 0.95 | 0.97 | 0.96 |
+| **DRUSEN** | 0.89 | 0.95 | 0.92 |
+| **NORMAL** | 0.98 | 0.97 | 0.98 |
 
-**Optilight** is designed strictly as an assistive tool to aid qualified ophthalmologists and clinicians during retinal evaluation workflows. 
-- AI predictions, probabilities, and texture descriptors **do not constitute autonomous medical diagnoses**.
-- Clinical findings must always be corroborated with complete clinical history, visual acuity examinations, and professional medical judgment.
-
----
-
-## 🔮 Future Enhancements
-
-- [ ] **Class Activation Maps (Grad-CAM)**: Heatmap visualization highlighting pathological lesion regions for enhanced model interpretability.
-- [ ] **Multi-device DICOM Ingestion**: Native parser for `.dcm` volumes directly exported from Heidelberg, Zeiss, and Topcon instruments.
-- [ ] **Automated PDF Clinical Reports**: One-click generation of exportable patient case summary sheets.
-- [ ] **Batch Evaluation Queue**: Multi-file drag-and-drop analysis for high-volume clinic workflows.
+*Note: These metrics reflect evaluation on the project test dataset split and are presented for technical and academic assessment.*
 
 ---
 
-## 📄 License
-This project is licensed under the [MIT License](LICENSE).
+## 13. All Screenshots
+
+### Application Screenshots
+
+#### New Analysis
+![New Analysis](docs/screenshots/HomePage.png)
+
+#### Prediction History
+![Prediction History](docs/screenshots/History.png)
+
+#### About Optilight — Part 1
+![About Optilight](docs/screenshots/About-1.png)
+
+#### About Optilight — Part 2
+![About Optilight](docs/screenshots/About-2.png)
+
+### Model Evaluation Screenshots
+
+#### Training Accuracy
+![Training Accuracy](docs/screenshots/accuracy_graph.png)
+
+#### Training vs Validation Accuracy
+![Training vs Validation Accuracy](docs/screenshots/TrainvsVal_acc_graph.png)
+
+#### Confusion Matrix
+![Confusion Matrix](docs/screenshots/confusion_matrix.png)
+
+#### F1-Score Per Class
+![F1 Score](docs/screenshots/f1-score_per_class.png)
+
+#### Precision Per Class
+![Precision](docs/screenshots/precision_per_class.png)
+
+#### Recall Per Class
+![Recall](docs/screenshots/recall_per_class.png)
+
+#### Overall Metrics
+![Overall Metrics](docs/screenshots/overall_metrics_summary.png)
+
+---
+
+> **Disclaimer:** optilight is an academic AI-assisted project. Its predictions are intended to support image analysis and should not be considered a standalone medical diagnosis. Clinical decisions should be made by qualified healthcare professionals using appropriate clinical information and medical judgment.
