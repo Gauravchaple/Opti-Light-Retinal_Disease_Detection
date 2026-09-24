@@ -18,7 +18,41 @@ The platform is structured as a decoupled web application comprising:
 
 Optilight is developed as an assistive clinical decision support tool to aid ophthalmologists and clinicians in analyzing OCT scans. It is not intended to provide autonomous medical diagnoses.
 
----
+
+------------------------------------------------------------------------
+
+## 📑 Table of Contents
+
+-   [🏗️ System Architecture](#️-system-architecture)
+-   [📁 Repository Structure](#-repository-structure)
+    -   [🧩 Module Overview](#-module-overview)
+-   [⚙️ How It Works](#️-how-it-works)
+    -   [📤 OCT Image Upload](#-oct-image-upload)
+    -   [🔬 Prediction Results](#-prediction-results)
+    -   [📜 Prediction History](#-prediction-history)
+    -   [👤 User Profile](#-user-profile)
+-   [🧠 Machine Learning Approach](#-machine-learning-approach)
+    -   [🖼️ ResNet50](#️-resnet50)
+    -   [🔲 GLCM](#-glcm)
+-   [🔗 Feature Fusion](#-feature-fusion)
+-   [🎯 Supported Classes](#-supported-classes)
+-   [🚀 Getting Started](#-getting-started)
+    -   [📌 Prerequisites](#-prerequisites)
+    -   [💻 Repository Setup](#-repository-setup)
+-   [🛠️ Backend Setup](#️-backend-setup)
+    -   [🧪 Standalone CLI
+        Inference](#-standalone-cli-inference-optional)
+-   [🌐 Frontend Setup](#-frontend-setup)
+-   [📡 API Overview](#-api-overview)
+-   [📊 Model Performance](#-model-performance)
+    -   [📈 Class-Wise Evaluation
+        Metrics](#-class-wise-evaluation-metrics)
+-   [🖼️ All Screenshots](#️-all-screenshots)
+    -   [💻 Application Screenshots](#-application-screenshots)
+    -   [📊 Model Evaluation
+        Screenshots](#-model-evaluation-screenshots)
+
+------------------------------------------------------------------------
 
 ## 🏗️ System Architecture
 
